@@ -18,4 +18,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 # mycloud
 It is a libre project for my home. If you want you can download it and use it under the GPL license.
 If you want to collaborate ... go! I need you.
+
+It is developed on Laravel with Vue and Vuex.
+This project started as a learning project, but it seems to be a good project for use in my home.
+
 # mycloud
