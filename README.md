@@ -16,6 +16,8 @@
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 # mycloud
+Actual state: developing...
+
 It is a libre project for my home. If you want you can download it and use it under the GPL license.
 If you want to collaborate ... go! I need you.
 
