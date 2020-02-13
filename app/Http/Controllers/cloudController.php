@@ -265,8 +265,11 @@ class cloudController extends Controller
         $idSelected = $req['idSelected'];
         $function   = $req['function'];
         $total      = $req['total'];
+        $totalSize  = $req['totalSize'];
+        $totalFiles = $req['totalFiles'];
+        $totalDirs  = $req['totalDirs'];
 
-
+        //copia degli elementi in cima
 
         return response()->json(['idSelected' => $idSelected,
                                  'function'   => $function,

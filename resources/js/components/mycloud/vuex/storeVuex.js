@@ -29,6 +29,7 @@ export const store = new Vuex.Store({
     },
     mutations: {   //insieme di funzioni sincrone. Esse vengono invocate con un commit
         SET_WAITING(state, status) {
+            console.log("eeeeeeeeeeeeeeee");
             state.waiting = status    //setta una variabile globale (vedi sopra: gruppo 'state:')
         },
         SET_LOADING_STATUS(state, status) {
@@ -268,7 +269,7 @@ export const store = new Vuex.Store({
             axios.post(href,getters.getFilesToCopyOrCut)
             .then(resp => {             
                 commit('SET_WAITING',false);
-                //console.log(resp);
+                console.log(resp);
             })
             .catch(err => {             
                 commit('SET_WAITING',false);

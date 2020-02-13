@@ -2946,7 +2946,14 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 /* harmony default export */ __webpack_exports__["default"] = ({
   store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_0__["store"],
   name: "mycloudWaitComponent",
-  methods: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_1__["mapGetters"])(['getWaiting']))
+  methods: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_1__["mapGetters"])(['getWaiting']), {
+    getDisplay: function getDisplay() {
+      if (this.getWaiting()) return 'visible';else return 'hidden';
+    },
+    getOpacity: function getOpacity() {
+      if (this.getWaiting()) return '1';else return '0';
+    }
+  })
 });
 
 /***/ }),
@@ -2983,13 +2990,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
+//
  //carica lo script Vuex
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   name: "tecInfoComponent",
   store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_0__["store"],
-  computed: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_1__["mapGetters"])(['getSelectedCount', 'getRecursiveSelectedCount', 'getFilesToCopyOrCut']))
+  computed: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_1__["mapGetters"])(['getSelectedCount', 'getRecursiveSelectedCount', 'getFilesToCopyOrCut', 'getIdPath', 'getWaiting'])),
+  methods: {
+    wait: function wait() {
+      console.log("cooo");
+      _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_0__["store"].commit('SET_WAITING', true);
+    }
+  }
 });
 
 /***/ }),
@@ -7765,7 +7779,7 @@ exports = module.exports = __webpack_require__(/*! ../../../../node_modules/css-
 
 
 // module
-exports.push([module.i, "\n#waiting[data-v-2ff66f10] {\n    position: absolute;\n    height: 100%;\n    width: 100%;\n    background: #000000a3;\n    top: 0px;\n    left: 0px;\n}\n", ""]);
+exports.push([module.i, "\n#waiting[data-v-2ff66f10] {\n    position: absolute;\n    height: 100%;\n    width: 100%;\n    background: #000000a3;\n    top: 0px;\n    left: 0px;\n    display: block;\n    visibility: hidden;\n    opacity : 0;\n    -webkit-transition: visibility 2s,opacity 2s;\n    transition: visibility 2s,opacity 2s;\n}\n", ""]);
 
 // exports
 
@@ -40683,11 +40697,14 @@ var render = function() {
   var _vm = this
   var _h = _vm.$createElement
   var _c = _vm._self._c || _h
-  return _vm.getWaiting()
-    ? _c("div", { attrs: { id: "waiting" } }, [
-        _vm._v(_vm._s(_vm.getWaiting()))
-      ])
-    : _vm._e()
+  return _c(
+    "div",
+    {
+      style: { visibility: _vm.getDisplay(), opacity: _vm.getOpacity() },
+      attrs: { id: "waiting" }
+    },
+    [_vm._v(_vm._s(_vm.getWaiting()))]
+  )
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -40713,6 +40730,8 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c("div", { attrs: { id: "tecInfoContainer" } }, [
     _c("div", { attrs: { id: "propName" } }, [
+      _c("p", [_vm._v("path ID:")]),
+      _vm._v(" "),
       _vm.getSelectedCount > 0
         ? _c("p", [_vm._v("selected files:")])
         : _vm._e(),
@@ -40725,6 +40744,8 @@ var render = function() {
     ]),
     _vm._v(" "),
     _c("div", { attrs: { id: "propValues" } }, [
+      _c("p", [_vm._v(_vm._s(_vm.getIdPath))]),
+      _vm._v(" "),
       _vm.getSelectedCount > 0
         ? _c("p", [_vm._v(_vm._s(_vm.getSelectedCount))])
         : _vm._e(),
@@ -55403,6 +55424,7 @@ var store = new Vuex.Store({
   mutations: {
     //insieme di funzioni sincrone. Esse vengono invocate con un commit
     SET_WAITING: function SET_WAITING(state, status) {
+      console.log("eeeeeeeeeeeeeeee");
       state.waiting = status; //setta una variabile globale (vedi sopra: gruppo 'state:')
     },
     SET_LOADING_STATUS: function SET_LOADING_STATUS(state, status) {
@@ -55681,7 +55703,8 @@ var store = new Vuex.Store({
       commit('SET_WAITING', true);
       var href = '/pasteFiles';
       axios.post(href, getters.getFilesToCopyOrCut).then(function (resp) {
-        commit('SET_WAITING', false); //console.log(resp);
+        commit('SET_WAITING', false);
+        console.log(resp);
       })["catch"](function (err) {
         commit('SET_WAITING', false);
         console.log('Errore su richiesta POST a ' + href + ': ' + err);

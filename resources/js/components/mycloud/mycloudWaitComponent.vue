@@ -1,5 +1,5 @@
 <template>          
-    <div v-if="getWaiting()" id="waiting">{{ getWaiting() }}</div>           
+    <div :style="{visibility : getDisplay(),opacity : getOpacity()}" id="waiting">{{ getWaiting() }}</div>           
 </template>
 
 <script>
@@ -10,7 +10,15 @@ import { mapGetters } from 'vuex';
         name : "mycloudWaitComponent",       
         methods: {            
             ...mapGetters(['getWaiting']),        
-           
+            getDisplay(){
+                if(this.getWaiting()) return 'visible';
+                else return 'hidden';
+            },        
+            getOpacity(){
+                if(this.getWaiting()) return '1';
+                else return '0';
+            },
+
         },
     }
 </script>
@@ -23,6 +31,10 @@ import { mapGetters } from 'vuex';
     background: #000000a3;
     top: 0px;
     left: 0px;
+    display: block;
+    visibility: hidden;
+    opacity : 0;
+    transition: visibility 2s,opacity 2s;
 }
 </style>
 

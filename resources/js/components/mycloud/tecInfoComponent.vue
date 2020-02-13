@@ -1,15 +1,16 @@
 <template>
     <div id="tecInfoContainer">
         <div id="propName">
+            <p>path ID:</p>
             <p v-if="getSelectedCount>0">selected files:</p>
             <p v-if="getFilesToCopyOrCut.total>0 ">files to {{ getFilesToCopyOrCut.function }}:</p>
             
         </div>
         <div id="propValues">
+            <p>{{ getIdPath }}</p>
             <p v-if="getSelectedCount>0">{{ getSelectedCount }}</p>
             <p v-if="getFilesToCopyOrCut.total>0 ">{{ getFilesToCopyOrCut.total }}</p>
         </div>
-        
     </div>
 </template>
 
@@ -22,8 +23,14 @@ import { mapGetters } from 'vuex';
         name : "tecInfoComponent",
         store,
         computed : {
-            ...mapGetters(['getSelectedCount','getRecursiveSelectedCount','getFilesToCopyOrCut'])
+            ...mapGetters(['getSelectedCount','getRecursiveSelectedCount','getFilesToCopyOrCut','getIdPath','getWaiting'])
         },
+        methods:{
+            wait(){
+                console.log("cooo");
+                store.commit('SET_WAITING',true);
+            }
+        }
     }
 </script>
 <style scoped>
