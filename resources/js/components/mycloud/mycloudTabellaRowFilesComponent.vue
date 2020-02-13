@@ -22,6 +22,7 @@ import { store } from './vuex/storeVuex';//carica lo script Vuex
 import { mapGetters } from 'vuex';
 
     export default {
+        name: "mycloudTabellaRowFilesComponent",
         store,
         data() {
             return {
@@ -62,6 +63,8 @@ import { mapGetters } from 'vuex';
             {
                 if(event  && this.type!="UP"){
                     event.preventDefault();
+                    event.stopPropagation();
+                    console.log(this.$options.name+": event hooked on dx mouse click.");
                     EventBus.$emit("contextMenuClicked",{
                         x : event.x,
                         y : event.y,

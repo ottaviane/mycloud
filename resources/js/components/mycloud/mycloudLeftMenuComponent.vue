@@ -1,8 +1,6 @@
 <template>
     <div id="lm">
-        
-           <div v-if="wait" id="waiting"></div>
-           <ul class="nav flex-column">
+        <ul class="nav flex-column">
             <li class="nav-item" style="border-bottom-width: 1px;border-bottom-style: solid;border-bottom-color: #a5aed5;">
                 <img src="/img/iconmonstr-weather-12-24.png">
                 <a class="nav-link" href="#">My files</a>
@@ -23,12 +21,8 @@
                 <img src="/img/iconmonstr-log-out-7-24.png">
                 <a class="nav-link" href="#">Logout</a>
             </li>
-          </ul>
-        
-        <form style='display:none' id="fileform">
-            <input id="path_doc_input" type='file' name="path_docs[]" multiple @change="fileScelti($event)">
-        </form>
-        <add-folder-modal-component></add-folder-modal-component>
+        </ul>
+        <tec-info-component></tec-info-component>        
     </div>
 </template>
 
@@ -90,10 +84,10 @@ import { mapGetters } from 'vuex';
             // EventBus.$on("addFolderWhithName", data => {
                
             // });
-             EventBus.$on("ChangeDirectory", data => {
-                this.id_path= data.id_path;
+            //  EventBus.$on("ChangeDirectory", data => {
+            //     this.id_path= data.id_path;
 
-            });
+            // });
         },
         mounted() {
 
@@ -105,7 +99,7 @@ import { mapGetters } from 'vuex';
     flex-grow: 1;
     max-width: 14rem;
     min-width: 3rem;    
-
+    overflow: hidden;
 }
 #fisso{
     overflow-y: scroll;

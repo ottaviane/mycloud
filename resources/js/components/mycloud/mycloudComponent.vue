@@ -12,6 +12,11 @@
             </div>
         </div>
         <my-little-popup-component></my-little-popup-component>
+        <mycloud-wait-component></mycloud-wait-component>
+        <form style='display:none' id="fileform">
+            <input id="path_doc_input" type='file' name="path_docs[]" multiple @change="fileScelti($event)">
+        </form>
+        <add-folder-modal-component></add-folder-modal-component>
     </centered-div-component>
 </template>
 
@@ -25,9 +30,9 @@ import { store } from './vuex/storeVuex';//carica lo script Vuex
             //console.log(store.getters.getInfo);
         },
         created(){
-            EventBus.$on("LayoutScreenDimensionModified", data => {
-                console.log("myCloudComponent : received screen resize:");
-                console.log(data);
+            EventBus.$on("LayoutScreenDimensionModified", data => { //fired by autoFixedDivComponent.vue
+                //console.log("myCloudComponent : received screen resize:");
+                //console.log(data);
                 store.commit('SET_SCREEN_ATTR',data);
             });
         }

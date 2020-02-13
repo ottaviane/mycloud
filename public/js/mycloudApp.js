@@ -2185,8 +2185,9 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+  name: "contexMenuComponent",
   store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"],
-  computed: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_2__["mapGetters"])(['copySelectedFiles', 'cutSelectedFiles', 'pasteFiles', 'getSelectedCount', 'getScreenAttr'])),
+  computed: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_2__["mapGetters"])(['getSelectedCount', 'getScreenAttr', 'getFilesToCopyOrCut'])),
   data: function data() {
     return {
       visibile: false,
@@ -2200,18 +2201,24 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
   props: {},
   methods: {
     copia: function copia() {
-      this.copySelectedFiles;
+      console.log("dispatching...");
+      _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('copySelectedFiles');
+      console.log("...dispatched");
+      this.visibile = false;
     },
     taglia: function taglia() {
-      this.cutSelectedFiles;
+      _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('cutSelectedFiles');
+      this.visibile = false;
     },
     incolla: function incolla() {
-      this.pasteFiles;
+      _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('pasteFiles');
+      this.visibile = false;
     },
     rinomina: function rinomina() {},
     elimina: function elimina() {},
     condividi: function condividi() {},
     myblur: function myblur() {
+      console.log(this.$options.name + ": event blur hooked");
       this.visibile = false;
     }
   },
@@ -2235,14 +2242,13 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       console.log(y + " + " + hpx + " = " + (y + hpx));
       console.log("screen_h = " + screen_h);
       if (x + wpx > screen_w) x -= wpx;
-
-      if (y + hpx > screen_h) {
-        console.log("base maggiore di hscreen" + (y + hpx) + " > " + screen_h);
-        y -= hpx;
-      }
-
+      if (y + hpx > screen_h) y = screen_h - hpx;
       that.x = x + "px";
       that.y = y + "px";
+      Vue.nextTick().then(function () {
+        console.log(that.$refs);
+        that.$refs.contextMenu.focus();
+      });
     });
   },
   mounted: function mounted() {}
@@ -2332,6 +2338,11 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
 
  //carica lo script Vuex
 
@@ -2341,8 +2352,9 @@ __webpack_require__.r(__webpack_exports__);
   },
   created: function created() {
     _mycloudApp_js__WEBPACK_IMPORTED_MODULE_0__["EventBus"].$on("LayoutScreenDimensionModified", function (data) {
-      console.log("myCloudComponent : received screen resize:");
-      console.log(data);
+      //fired by autoFixedDivComponent.vue
+      //console.log("myCloudComponent : received screen resize:");
+      //console.log(data);
       _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].commit('SET_SCREEN_ATTR', data);
     });
   }
@@ -2447,12 +2459,6 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 //
 //
 //
-//
-//
-//
-//
-//
-//
 
  //carica lo script Vuex
 
@@ -2509,14 +2515,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       });
     }
   }),
-  created: function created() {
-    var _this2 = this;
-
-    // EventBus.$on("addFolderWhithName", data => {
+  created: function created() {// EventBus.$on("addFolderWhithName", data => {
     // });
-    _mycloudApp_js__WEBPACK_IMPORTED_MODULE_0__["EventBus"].$on("ChangeDirectory", function (data) {
-      _this2.id_path = data.id_path;
-    });
+    //  EventBus.$on("ChangeDirectory", data => {
+    //     this.id_path= data.id_path;
+    // });
   },
   mounted: function mounted() {}
 });
@@ -2614,10 +2617,11 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 /* harmony default export */ __webpack_exports__["default"] = ({
   store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"],
-  computed: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_2__["mapGetters"])(['getFullPath', 'getIdPath'])),
+  computed: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_2__["mapGetters"])(['getFullPath', 'getIdPath', 'getSelectedItem'])),
   methods: {
     itemClicked: function itemClicked(id_to) {
       _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('chdir', id_to);
+      _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('setSelected', id_to);
     },
     rowMouseDxClicked: function rowMouseDxClicked(event, id_to) //tastp destro del mouse
     {
@@ -2718,6 +2722,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+  name: "mycloudTabellaFilesComponent",
   store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"],
   data: function data() {
     return {
@@ -2776,31 +2781,37 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
         }
       }
     },
-    rowMouseDxClicked: function rowMouseDxClicked(event) //tastp destro del mouse
+    rowMouseDxClicked: function rowMouseDxClicked(event) //tasto destro del mouse sulla base e non sulla lista files
     {
       if (event && this.type != "UP") {
-        event.preventDefault();
+        event.preventDefault(); //console.log(this.$options.name+": event hooked on dx mouse click.");
+
         _mycloudApp_js__WEBPACK_IMPORTED_MODULE_0__["EventBus"].$emit("contextMenuClicked", {
           x: event.x,
           y: event.y,
-          id: 0
+          id: -1
         });
       }
     }
   },
   mounted: function mounted() {
-    this.getList();
-    this.log("ho ottenuto da Vuex i seguenti dati:");
-    this.log(this.getFiles);
-    this.log(this.getDirs);
+    this.getList(); // this.log("ho ottenuto da Vuex i seguenti dati:");
+    //     this.log(this.getFiles);
+    //     this.log(this.getDirs);     
   },
   created: function created() {
+    var _this = this;
+
     _mycloudApp_js__WEBPACK_IMPORTED_MODULE_0__["EventBus"].$on("contextMenuClicked", function (data) {
-      _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('deselectAll');
-      _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('setSelected', {
-        id: data.id,
-        val: true
-      });
+      if (_this.getSelectedItem(data.id)) {//se l'item su cui è stato fatto click col dx è già selezionato
+      } else {
+        //se l'item su cui è stato fatto click col dx NON è già selezionato allora deseleziona tutto e ricomincia
+        _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('deselectAll');
+        _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"].dispatch('setSelected', {
+          id: data.id,
+          val: true
+        });
+      }
     });
   }
 });
@@ -2848,6 +2859,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
+  name: "mycloudTabellaRowFilesComponent",
   store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_1__["store"],
   data: function data() {
     return {
@@ -2893,6 +2905,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
     {
       if (event && this.type != "UP") {
         event.preventDefault();
+        event.stopPropagation();
+        console.log(this.$options.name + ": event hooked on dx mouse click.");
         _mycloudApp_js__WEBPACK_IMPORTED_MODULE_0__["EventBus"].$emit("contextMenuClicked", {
           x: event.x,
           y: event.y,
@@ -2901,6 +2915,81 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
       }
     }
   }
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=script&lang=js&":
+/*!***************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=script&lang=js& ***!
+  \***************************************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./vuex/storeVuex */ "./resources/js/components/mycloud/vuex/storeVuex.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+//
+//
+//
+//
+ //carica lo script Vuex
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_0__["store"],
+  name: "mycloudWaitComponent",
+  methods: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_1__["mapGetters"])(['getWaiting']))
+});
+
+/***/ }),
+
+/***/ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=script&lang=js&":
+/*!***********************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/babel-loader/lib??ref--4-0!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=script&lang=js& ***!
+  \***********************************************************************************************************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./vuex/storeVuex */ "./resources/js/components/mycloud/vuex/storeVuex.js");
+/* harmony import */ var vuex__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vuex */ "./node_modules/vuex/dist/vuex.esm.js");
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+ //carica lo script Vuex
+
+
+/* harmony default export */ __webpack_exports__["default"] = ({
+  name: "tecInfoComponent",
+  store: _vuex_storeVuex__WEBPACK_IMPORTED_MODULE_0__["store"],
+  computed: _objectSpread({}, Object(vuex__WEBPACK_IMPORTED_MODULE_1__["mapGetters"])(['getSelectedCount', 'getRecursiveSelectedCount', 'getFilesToCopyOrCut']))
 });
 
 /***/ }),
@@ -7562,7 +7651,7 @@ exports = module.exports = __webpack_require__(/*! ../../../../node_modules/css-
 
 
 // module
-exports.push([module.i, "\n#lm[data-v-44a6ae1f]{\n    -webkit-box-flex: 1;\n            flex-grow: 1;\n    max-width: 14rem;\n    min-width: 3rem;\n}\n#fisso[data-v-44a6ae1f]{\n    overflow-y: scroll;\n    overflow-x: inherit;\n    position: relative;\n    width: 100%;\n    height: 100%;\n    top:0px;\n    left:0px;\n}\nul[data-v-44a6ae1f]{\n    background: #f8fafc;\n    padding-left: 20px;\n    margin-top:20px;\n}\nimg[data-v-44a6ae1f] {\n    float: left;\n    margin-right: 0px;\n}\nli[data-v-44a6ae1f] {\n    display: -webkit-box;\n    display: flex;\n    -webkit-box-align: center;\n            align-items: center;\n    margin-top: 5px;\n    margin-bottom: 5px;\n}\n#waiting[data-v-44a6ae1f] {\n\n    position: absolute;\n    height: 100%;\n    width: 100%;\n    background:\n\n    #000000a3;\n}\n", ""]);
+exports.push([module.i, "\n#lm[data-v-44a6ae1f]{\n    -webkit-box-flex: 1;\n            flex-grow: 1;\n    max-width: 14rem;\n    min-width: 3rem;    \n    overflow: hidden;\n}\n#fisso[data-v-44a6ae1f]{\n    overflow-y: scroll;\n    overflow-x: inherit;\n    position: relative;\n    width: 100%;\n    height: 100%;\n    top:0px;\n    left:0px;\n}\nul[data-v-44a6ae1f]{\n    background: #f8fafc;\n    padding-left: 20px;\n    margin-top:20px;\n}\nimg[data-v-44a6ae1f] {\n    float: left;\n    margin-right: 0px;\n}\nli[data-v-44a6ae1f] {\n    display: -webkit-box;\n    display: flex;\n    -webkit-box-align: center;\n            align-items: center;\n    margin-top: 5px;\n    margin-bottom: 5px;\n}\n#waiting[data-v-44a6ae1f] {\n\n    position: absolute;\n    height: 100%;\n    width: 100%;\n    background:\n\n    #000000a3;\n}\n", ""]);
 
 // exports
 
@@ -7600,7 +7689,7 @@ exports = module.exports = __webpack_require__(/*! ../../../../node_modules/css-
 
 
 // module
-exports.push([module.i, "\nspan[data-v-41597a60] {\n    display: -webkit-box;\n    display: flex;\n    -webkit-box-orient: horizontal;\n    -webkit-box-direction: normal;\n            flex-direction: row;\n    align-content: center;\n    -webkit-box-align: center;\n            align-items: center;\n}\np[data-v-41597a60]{\n    margin:0px;\n    cursor:pointer;\n}\np[data-v-41597a60]:hover{\n    -webkit-filter: brightness(45%);\n            filter: brightness(45%);\n    color:rgb(185, 185, 185);\n}\n#path-bar[data-v-41597a60]{\n    max-height: 32px;\n    min-height: 32px;\n    border-bottom-width: 1px;\n    border-bottom-style: solid;\n    border-bottom-color:#a5aed563;\n    display:-webkit-box;\n    display:flex;\n    -webkit-box-orient: horizontal;\n    -webkit-box-direction: normal;\n            flex-direction: row;\n    -webkit-box-align: center;\n            align-items: center;\n}\n.arrowr[data-v-41597a60]{\n    margin-left: 8px;\n    margin-right: 8px;\n}\n", ""]);
+exports.push([module.i, "\nspan[data-v-41597a60] {\n    display: -webkit-box;\n    display: flex;\n    -webkit-box-orient: horizontal;\n    -webkit-box-direction: normal;\n            flex-direction: row;\n    align-content: center;\n    -webkit-box-align: center;\n            align-items: center;\n}\np[data-v-41597a60]{\n    margin:0px;\n    cursor:pointer;\n}\np[data-v-41597a60]:hover{\n    -webkit-filter: brightness(45%);\n            filter: brightness(45%);\n    color:rgb(185, 185, 185);\n}\n#path-bar[data-v-41597a60]{\n    max-height: 32px;\n    min-height: 32px;\n    border-bottom-width: 1px;\n    border-bottom-style: solid;\n    border-bottom-color:#a5aed563;\n    display:-webkit-box;\n    display:flex;\n    -webkit-box-orient: horizontal;\n    -webkit-box-direction: normal;\n            flex-direction: row;\n    -webkit-box-align: center;\n            align-items: center;\n}\n.arrowr[data-v-41597a60]{\n    margin-left: 8px;\n    margin-right: 8px;\n}\n.selected[data-v-41597a60]{\n    color:red;\n    background: yellow;\n}\n", ""]);
 
 // exports
 
@@ -7658,6 +7747,44 @@ exports = module.exports = __webpack_require__(/*! ../../../../node_modules/css-
 
 // module
 exports.push([module.i, "\n#tab-row{\n    max-height:56px;\n    min-height:56px;\n    display:-webkit-box;\n    display:flex;\n    padding: 8px;\n    cursor:pointer;\n}\n#tab-row:hover{\n    -webkit-filter: brightness(45%);\n            filter: brightness(45%);\n}\n#rn{\n    -webkit-box-flex: 1;\n            flex-grow: 1;\n    -webkit-box-align: center;\n            align-items: center;\n    display: -webkit-box;\n    display: flex;\n}\n#rs, #rlm{\n    min-width: 8rem;\n    max-width: 20rem;\n    display: -webkit-box;\n    display: flex;\n    -webkit-box-align: center;\n            align-items: center;\n}\n.rowselected{\n    background: #e600009e;\n    -webkit-transition: background 0.2s;\n    transition: background 0.2s;\n}\n.noselect {\n  -webkit-touch-callout: none; /* iOS Safari */\n    -webkit-user-select: none; /* Safari */ /* Konqueror HTML */\n       -moz-user-select: none; /* Firefox */\n        -ms-user-select: none; /* Internet Explorer/Edge */\n            user-select: none; /* Non-prefixed version, currently\n                                  supported by Chrome and Opera */\n\n    -webkit-transition: background 0.4s;\n\n    transition: background 0.4s;\n}\n.cutting{\n    text-decoration: line-through;\n    color:gray;\n}\n.copying{\n    color:green;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+
+/***/ "./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css&":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--6-1!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src??ref--6-2!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css& ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(/*! ../../../../node_modules/css-loader/lib/css-base.js */ "./node_modules/css-loader/lib/css-base.js")(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n#waiting[data-v-2ff66f10] {\n    position: absolute;\n    height: 100%;\n    width: 100%;\n    background: #000000a3;\n    top: 0px;\n    left: 0px;\n}\n", ""]);
+
+// exports
+
+
+/***/ }),
+
+/***/ "./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css&":
+/*!******************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/css-loader??ref--6-1!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src??ref--6-2!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css& ***!
+  \******************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+exports = module.exports = __webpack_require__(/*! ../../../../node_modules/css-loader/lib/css-base.js */ "./node_modules/css-loader/lib/css-base.js")(false);
+// imports
+
+
+// module
+exports.push([module.i, "\n#tecInfoContainer[data-v-8c9297e4]{        \n    width: 100%;\n    height: 100%;\n    display:-webkit-box;\n    display:flex;\n    padding: 1rem;\n    font-size: 0.7rem;\n}\n#propName[data-v-8c9297e4]{        \n    -webkit-box-flex: 10;        \n            flex-grow: 10;\n    overflow: hidden;\n    text-align: right;\n    margin-right: 1rem;\n}\n#propValues[data-v-8c9297e4]{        \n    -webkit-box-flex: 18;        \n            flex-grow: 18;\n    overflow: hidden;\n}\n", ""]);
 
 // exports
 
@@ -38860,6 +38987,66 @@ if(false) {}
 
 /***/ }),
 
+/***/ "./node_modules/style-loader/index.js!./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css&":
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/style-loader!./node_modules/css-loader??ref--6-1!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src??ref--6-2!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css& ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+var content = __webpack_require__(/*! !../../../../node_modules/css-loader??ref--6-1!../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../node_modules/postcss-loader/src??ref--6-2!../../../../node_modules/vue-loader/lib??vue-loader-options!./mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css& */ "./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css&");
+
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
+options.transform = transform
+options.insertInto = undefined;
+
+var update = __webpack_require__(/*! ../../../../node_modules/style-loader/lib/addStyles.js */ "./node_modules/style-loader/lib/addStyles.js")(content, options);
+
+if(content.locals) module.exports = content.locals;
+
+if(false) {}
+
+/***/ }),
+
+/***/ "./node_modules/style-loader/index.js!./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css&":
+/*!**********************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/style-loader!./node_modules/css-loader??ref--6-1!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src??ref--6-2!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css& ***!
+  \**********************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+
+var content = __webpack_require__(/*! !../../../../node_modules/css-loader??ref--6-1!../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../node_modules/postcss-loader/src??ref--6-2!../../../../node_modules/vue-loader/lib??vue-loader-options!./tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css& */ "./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css&");
+
+if(typeof content === 'string') content = [[module.i, content, '']];
+
+var transform;
+var insertInto;
+
+
+
+var options = {"hmr":true}
+
+options.transform = transform
+options.insertInto = undefined;
+
+var update = __webpack_require__(/*! ../../../../node_modules/style-loader/lib/addStyles.js */ "./node_modules/style-loader/lib/addStyles.js")(content, options);
+
+if(content.locals) module.exports = content.locals;
+
+if(false) {}
+
+/***/ }),
+
 /***/ "./node_modules/style-loader/lib/addStyles.js":
 /*!****************************************************!*\
   !*** ./node_modules/style-loader/lib/addStyles.js ***!
@@ -39642,7 +39829,7 @@ var render = function() {
   return _c(
     "div",
     {
-      ref: "myinput",
+      ref: "contextMenu",
       class: { cmvisibile: _vm.visibile },
       style: {
         left: _vm.x,
@@ -39654,21 +39841,31 @@ var render = function() {
       on: { blur: _vm.myblur }
     },
     [
-      _c("div", { staticClass: "menuitem", on: { click: _vm.copia } }, [
-        _c("i", { staticClass: "far fa-copy" }),
-        _vm._v("Copia")
-      ]),
-      _vm._v(" "),
-      _c("div", { staticClass: "menuitem", on: { click: _vm.taglia } }, [
-        _c("i", { staticClass: "fas fa-cut" }),
-        _vm._v("Taglia")
-      ]),
+      _c(
+        "div",
+        {
+          staticClass: "menuitem",
+          class: { disabled: _vm.getSelectedCount <= 0 },
+          on: { click: _vm.copia }
+        },
+        [_c("i", { staticClass: "far fa-copy" }), _vm._v("Copia")]
+      ),
       _vm._v(" "),
       _c(
         "div",
         {
           staticClass: "menuitem",
-          class: { disabled: _vm.getSelectedCount != 1 },
+          class: { disabled: _vm.getSelectedCount <= 0 },
+          on: { click: _vm.taglia }
+        },
+        [_c("i", { staticClass: "fas fa-cut" }), _vm._v("Taglia")]
+      ),
+      _vm._v(" "),
+      _c(
+        "div",
+        {
+          staticClass: "menuitem",
+          class: { disabled: _vm.getFilesToCopyOrCut.total <= 0 },
           on: { click: _vm.incolla }
         },
         [_c("i", { staticClass: "fas fa-clone" }), _vm._v("Incolla")]
@@ -39676,22 +39873,37 @@ var render = function() {
       _vm._v(" "),
       _c("div", { staticClass: "menuline" }),
       _vm._v(" "),
-      _c("div", { staticClass: "menuitem", on: { click: _vm.rinomina } }, [
-        _c("i", { staticClass: "fas fa-edit" }),
-        _vm._v("Rinomina")
-      ]),
+      _c(
+        "div",
+        {
+          staticClass: "menuitem",
+          class: { disabled: _vm.getSelectedCount <= 0 },
+          on: { click: _vm.rinomina }
+        },
+        [_c("i", { staticClass: "fas fa-edit" }), _vm._v("Rinomina")]
+      ),
       _vm._v(" "),
-      _c("div", { staticClass: "menuitem", on: { click: _vm.elimina } }, [
-        _c("i", { staticClass: "fas fa-backspace" }),
-        _vm._v("Elimina")
-      ]),
+      _c(
+        "div",
+        {
+          staticClass: "menuitem",
+          class: { disabled: _vm.getSelectedCount <= 0 },
+          on: { click: _vm.elimina }
+        },
+        [_c("i", { staticClass: "fas fa-backspace" }), _vm._v("Elimina")]
+      ),
       _vm._v(" "),
       _c("div", { staticClass: "menuline" }),
       _vm._v(" "),
-      _c("div", { staticClass: "menuitem", on: { click: _vm.condividi } }, [
-        _c("i", { staticClass: "fas fa-share-alt" }),
-        _vm._v("Condividi")
-      ])
+      _c(
+        "div",
+        {
+          staticClass: "menuitem",
+          class: { disabled: _vm.getSelectedCount <= 0 },
+          on: { click: _vm.condividi }
+        },
+        [_c("i", { staticClass: "fas fa-share-alt" }), _vm._v("Condividi")]
+      )
     ]
   )
 }
@@ -39789,7 +40001,31 @@ var render = function() {
         1
       ),
       _vm._v(" "),
-      _c("my-little-popup-component")
+      _c("my-little-popup-component"),
+      _vm._v(" "),
+      _c("mycloud-wait-component"),
+      _vm._v(" "),
+      _c(
+        "form",
+        { staticStyle: { display: "none" }, attrs: { id: "fileform" } },
+        [
+          _c("input", {
+            attrs: {
+              id: "path_doc_input",
+              type: "file",
+              name: "path_docs[]",
+              multiple: ""
+            },
+            on: {
+              change: function($event) {
+                return _vm.fileScelti($event)
+              }
+            }
+          })
+        ]
+      ),
+      _vm._v(" "),
+      _c("add-folder-modal-component")
     ],
     1
   )
@@ -39879,8 +40115,6 @@ var render = function() {
     "div",
     { attrs: { id: "lm" } },
     [
-      _vm.wait ? _c("div", { attrs: { id: "waiting" } }) : _vm._e(),
-      _vm._v(" "),
       _c("ul", { staticClass: "nav flex-column" }, [
         _vm._m(0),
         _vm._v(" "),
@@ -39920,27 +40154,7 @@ var render = function() {
         _vm._m(2)
       ]),
       _vm._v(" "),
-      _c(
-        "form",
-        { staticStyle: { display: "none" }, attrs: { id: "fileform" } },
-        [
-          _c("input", {
-            attrs: {
-              id: "path_doc_input",
-              type: "file",
-              name: "path_docs[]",
-              multiple: ""
-            },
-            on: {
-              change: function($event) {
-                return _vm.fileScelti($event)
-              }
-            }
-          })
-        ]
-      ),
-      _vm._v(" "),
-      _c("add-folder-modal-component")
+      _c("tec-info-component")
     ],
     1
   )
@@ -40217,13 +40431,21 @@ var render = function() {
             _c(
               "p",
               {
+                class: { selected: _vm.getSelectedItem(item.id) },
                 on: {
                   click: function($event) {
                     return _vm.itemClicked(item.id)
                   }
                 }
               },
-              [_vm._v(_vm._s(item.val1))]
+              [
+                _vm._v(
+                  _vm._s(item.val1) +
+                    "(" +
+                    _vm._s(_vm.getSelectedItem(item.id)) +
+                    ")"
+                )
+              ]
             )
           ]
         )
@@ -40438,6 +40660,80 @@ var render = function() {
       _c("div", { attrs: { id: "rlm" } }, [_vm._v(_vm._s(_vm.row.updated_at))])
     ]
   )
+}
+var staticRenderFns = []
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true&":
+/*!*******************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true& ***!
+  \*******************************************************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm.getWaiting()
+    ? _c("div", { attrs: { id: "waiting" } }, [
+        _vm._v(_vm._s(_vm.getWaiting()))
+      ])
+    : _vm._e()
+}
+var staticRenderFns = []
+render._withStripped = true
+
+
+
+/***/ }),
+
+/***/ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true&":
+/*!***************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true& ***!
+  \***************************************************************************************************************************************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "render", function() { return render; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return staticRenderFns; });
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div", { attrs: { id: "tecInfoContainer" } }, [
+    _c("div", { attrs: { id: "propName" } }, [
+      _vm.getSelectedCount > 0
+        ? _c("p", [_vm._v("selected files:")])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.getFilesToCopyOrCut.total > 0
+        ? _c("p", [
+            _vm._v("files to " + _vm._s(_vm.getFilesToCopyOrCut.function) + ":")
+          ])
+        : _vm._e()
+    ]),
+    _vm._v(" "),
+    _c("div", { attrs: { id: "propValues" } }, [
+      _vm.getSelectedCount > 0
+        ? _c("p", [_vm._v(_vm._s(_vm.getSelectedCount))])
+        : _vm._e(),
+      _vm._v(" "),
+      _vm.getFilesToCopyOrCut.total > 0
+        ? _c("p", [_vm._v(_vm._s(_vm.getFilesToCopyOrCut.total))])
+        : _vm._e()
+    ])
+  ])
 }
 var staticRenderFns = []
 render._withStripped = true
@@ -54878,6 +55174,180 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/components/mycloud/mycloudWaitComponent.vue":
+/*!******************************************************************!*\
+  !*** ./resources/js/components/mycloud/mycloudWaitComponent.vue ***!
+  \******************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _mycloudWaitComponent_vue_vue_type_template_id_2ff66f10_scoped_true___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true& */ "./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true&");
+/* harmony import */ var _mycloudWaitComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./mycloudWaitComponent.vue?vue&type=script&lang=js& */ "./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _mycloudWaitComponent_vue_vue_type_style_index_0_id_2ff66f10_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css& */ "./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css&");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _mycloudWaitComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _mycloudWaitComponent_vue_vue_type_template_id_2ff66f10_scoped_true___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _mycloudWaitComponent_vue_vue_type_template_id_2ff66f10_scoped_true___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  "2ff66f10",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/components/mycloud/mycloudWaitComponent.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=script&lang=js&":
+/*!*******************************************************************************************!*\
+  !*** ./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=script&lang=js& ***!
+  \*******************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/babel-loader/lib??ref--4-0!../../../../node_modules/vue-loader/lib??vue-loader-options!./mycloudWaitComponent.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css&":
+/*!***************************************************************************************************************************!*\
+  !*** ./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css& ***!
+  \***************************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_style_index_0_id_2ff66f10_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/style-loader!../../../../node_modules/css-loader??ref--6-1!../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../node_modules/postcss-loader/src??ref--6-2!../../../../node_modules/vue-loader/lib??vue-loader-options!./mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css& */ "./node_modules/style-loader/index.js!./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=style&index=0&id=2ff66f10&scoped=true&lang=css&");
+/* harmony import */ var _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_style_index_0_id_2ff66f10_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_style_index_0_id_2ff66f10_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__);
+/* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_style_index_0_id_2ff66f10_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__) if(__WEBPACK_IMPORT_KEY__ !== 'default') (function(key) { __webpack_require__.d(__webpack_exports__, key, function() { return _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_style_index_0_id_2ff66f10_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__[key]; }) }(__WEBPACK_IMPORT_KEY__));
+ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_style_index_0_id_2ff66f10_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
+
+/***/ }),
+
+/***/ "./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true&":
+/*!*************************************************************************************************************!*\
+  !*** ./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true& ***!
+  \*************************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_template_id_2ff66f10_scoped_true___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../node_modules/vue-loader/lib??vue-loader-options!./mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/mycloudWaitComponent.vue?vue&type=template&id=2ff66f10&scoped=true&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_template_id_2ff66f10_scoped_true___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_mycloudWaitComponent_vue_vue_type_template_id_2ff66f10_scoped_true___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
+/***/ "./resources/js/components/mycloud/tecInfoComponent.vue":
+/*!**************************************************************!*\
+  !*** ./resources/js/components/mycloud/tecInfoComponent.vue ***!
+  \**************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _tecInfoComponent_vue_vue_type_template_id_8c9297e4_scoped_true___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true& */ "./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true&");
+/* harmony import */ var _tecInfoComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./tecInfoComponent.vue?vue&type=script&lang=js& */ "./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport *//* harmony import */ var _tecInfoComponent_vue_vue_type_style_index_0_id_8c9297e4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css& */ "./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css&");
+/* harmony import */ var _node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../../../node_modules/vue-loader/lib/runtime/componentNormalizer.js */ "./node_modules/vue-loader/lib/runtime/componentNormalizer.js");
+
+
+
+
+
+
+/* normalize component */
+
+var component = Object(_node_modules_vue_loader_lib_runtime_componentNormalizer_js__WEBPACK_IMPORTED_MODULE_3__["default"])(
+  _tecInfoComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_1__["default"],
+  _tecInfoComponent_vue_vue_type_template_id_8c9297e4_scoped_true___WEBPACK_IMPORTED_MODULE_0__["render"],
+  _tecInfoComponent_vue_vue_type_template_id_8c9297e4_scoped_true___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"],
+  false,
+  null,
+  "8c9297e4",
+  null
+  
+)
+
+/* hot reload */
+if (false) { var api; }
+component.options.__file = "resources/js/components/mycloud/tecInfoComponent.vue"
+/* harmony default export */ __webpack_exports__["default"] = (component.exports);
+
+/***/ }),
+
+/***/ "./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=script&lang=js&":
+/*!***************************************************************************************!*\
+  !*** ./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=script&lang=js& ***!
+  \***************************************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/babel-loader/lib??ref--4-0!../../../../node_modules/vue-loader/lib??vue-loader-options!./tecInfoComponent.vue?vue&type=script&lang=js& */ "./node_modules/babel-loader/lib/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=script&lang=js&");
+/* empty/unused harmony star reexport */ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_babel_loader_lib_index_js_ref_4_0_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_script_lang_js___WEBPACK_IMPORTED_MODULE_0__["default"]); 
+
+/***/ }),
+
+/***/ "./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css&":
+/*!***********************************************************************************************************************!*\
+  !*** ./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css& ***!
+  \***********************************************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_style_index_0_id_8c9297e4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/style-loader!../../../../node_modules/css-loader??ref--6-1!../../../../node_modules/vue-loader/lib/loaders/stylePostLoader.js!../../../../node_modules/postcss-loader/src??ref--6-2!../../../../node_modules/vue-loader/lib??vue-loader-options!./tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css& */ "./node_modules/style-loader/index.js!./node_modules/css-loader/index.js?!./node_modules/vue-loader/lib/loaders/stylePostLoader.js!./node_modules/postcss-loader/src/index.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=style&index=0&id=8c9297e4&scoped=true&lang=css&");
+/* harmony import */ var _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_style_index_0_id_8c9297e4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_style_index_0_id_8c9297e4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__);
+/* harmony reexport (unknown) */ for(var __WEBPACK_IMPORT_KEY__ in _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_style_index_0_id_8c9297e4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__) if(__WEBPACK_IMPORT_KEY__ !== 'default') (function(key) { __webpack_require__.d(__webpack_exports__, key, function() { return _node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_style_index_0_id_8c9297e4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0__[key]; }) }(__WEBPACK_IMPORT_KEY__));
+ /* harmony default export */ __webpack_exports__["default"] = (_node_modules_style_loader_index_js_node_modules_css_loader_index_js_ref_6_1_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_postcss_loader_src_index_js_ref_6_2_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_style_index_0_id_8c9297e4_scoped_true_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
+
+/***/ }),
+
+/***/ "./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true&":
+/*!*********************************************************************************************************!*\
+  !*** ./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true& ***!
+  \*********************************************************************************************************/
+/*! exports provided: render, staticRenderFns */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_template_id_8c9297e4_scoped_true___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!../../../../node_modules/vue-loader/lib??vue-loader-options!./tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true& */ "./node_modules/vue-loader/lib/loaders/templateLoader.js?!./node_modules/vue-loader/lib/index.js?!./resources/js/components/mycloud/tecInfoComponent.vue?vue&type=template&id=8c9297e4&scoped=true&");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "render", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_template_id_8c9297e4_scoped_true___WEBPACK_IMPORTED_MODULE_0__["render"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "staticRenderFns", function() { return _node_modules_vue_loader_lib_loaders_templateLoader_js_vue_loader_options_node_modules_vue_loader_lib_index_js_vue_loader_options_tecInfoComponent_vue_vue_type_template_id_8c9297e4_scoped_true___WEBPACK_IMPORTED_MODULE_0__["staticRenderFns"]; });
+
+
+
+/***/ }),
+
 /***/ "./resources/js/components/mycloud/vuex/storeVuex.js":
 /*!***********************************************************!*\
   !*** ./resources/js/components/mycloud/vuex/storeVuex.js ***!
@@ -54895,7 +55365,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var store = new Vuex.Store({
   state: (_state = {
     //insieme di variabili globali
-    loadingStatus: 'loading',
+    waiting: false,
     selected: [],
     //array contenente indici di riferimento dei file e dirs selezionati
     startSelection: -1,
@@ -54921,10 +55391,20 @@ var store = new Vuex.Store({
       "function": "" //copy or cut
 
     },
+    selectionRecursiveInfo: {
+      total: 0,
+      totalFiles: 0,
+      totalDirs: 0,
+      totalSize: 0,
+      idSelected: []
+    },
     selectedItemsArray: []
   }, _defineProperty(_state, "filesToCopyOrCut", {}), _defineProperty(_state, "screenAttr", {}), _state),
   mutations: {
     //insieme di funzioni sincrone. Esse vengono invocate con un commit
+    SET_WAITING: function SET_WAITING(state, status) {
+      state.waiting = status; //setta una variabile globale (vedi sopra: gruppo 'state:')
+    },
     SET_LOADING_STATUS: function SET_LOADING_STATUS(state, status) {
       state.loadingStatus = status; //setta una variabile globale (vedi sopra: gruppo 'state:')
     },
@@ -54995,8 +55475,8 @@ var store = new Vuex.Store({
       state.endSelection = end; //console.log("start="+start+"  end="+end);
     },
     SET_SCREEN_ATTR: function SET_SCREEN_ATTR(state, screenAttr) {
-      console.log("setting to ");
-      console.log(screenAttr);
+      //console.log("setting to ");
+      //console.log(screenAttr);
       state.screenAttr = screenAttr;
     }
   },
@@ -55006,32 +55486,38 @@ var store = new Vuex.Store({
       var commit = _ref.commit,
           dispatch = _ref.dispatch,
           getters = _ref.getters;
-      var href = '/getList';
-      console.log("Vuex: getting info from " + href);
+      commit('SET_WAITING', true);
+      var href = '/getList'; //console.log("Vuex: getting info from "+href);
+
       var form = new FormData();
       form.append('_token', window.csrf_token);
       form.append('id_path', getters.getIdPath);
       axios.post(href, form).then(function (resp) {
-        console.log("Vuex: ricevo i seguenti dati:");
-        console.log(resp.data);
+        //console.log("Vuex: ricevo i seguenti dati:");
+        //console.log(resp.data);
         commit('SET_FILES', resp.data.flist);
         commit('SET_DIRS', resp.data.dlist);
         dispatch('requestFullPath');
+        commit('SET_WAITING', false);
       })["catch"](function (err) {
         console.log('Errore su richiesta GET a ' + href + ': ' + err);
+        commit('SET_WAITING', false);
       });
     },
     requestFullPath: function requestFullPath(_ref2) {
       var getters = _ref2.getters,
           commit = _ref2.commit;
+      commit('SET_WAITING', true);
       var href = "/getPath"; //ricerchiamo il path completo partendo dall'id_path corrente
 
       var form = new FormData();
       form.append("_token", window.csrf_token);
       form.append("id_path", getters.getIdPath);
       axios.post(href, form).then(function (resp) {
+        commit('SET_WAITING', false);
         commit('SET_FULL_PATH', resp.data.path);
       })["catch"](function (err) {
+        commit('SET_WAITING', false);
         console.log("Errore su richiesta POST a " + href + ": " + err);
       });
     },
@@ -55046,27 +55532,36 @@ var store = new Vuex.Store({
       var dispatch = _ref4.dispatch,
           getters = _ref4.getters,
           commit = _ref4.commit;
+      commit('SET_WAITING', true);
       var href = '/goUp'; //ricerchiamo il padre dell'id corrente
 
       var form = new FormData();
       form.append('_token', window.csrf_token);
       form.append('id_path', getters.getIdPath);
       axios.post(href, form).then(function (resp) {
+        commit('SET_WAITING', false);
         commit('SET_ID_PATH', resp.data.id_path);
         dispatch('getFileInfo', resp.data.id_path);
       })["catch"](function (err) {
+        commit('SET_WAITING', false);
         console.log('Errore su richiesta POST a ' + href + ': ' + err);
       });
     },
     setSelected: function setSelected(_ref5, valore) {
-      var commit = _ref5.commit;
-      commit('SET_SELECTED', valore);
-      if (valore.val) commit('SET_START_SELECTION', valore.id);
+      var commit = _ref5.commit,
+          dispatch = _ref5.dispatch;
+
+      if (valore.id > -1) {
+        commit('SET_SELECTED', valore);
+        if (valore.val) commit('SET_START_SELECTION', valore.id);
+        dispatch('selectionRecursiveCalculate');
+      }
     },
     rangeSelect: function rangeSelect(_ref6, data) {
       var state = _ref6.state,
           commit = _ref6.commit,
-          getters = _ref6.getters;
+          getters = _ref6.getters,
+          dispatch = _ref6.dispatch;
       //console.log("deselector="+deselector);
       commit('SET_END_SELECTION', data.id);
       var start = getters.getStartSelection;
@@ -55094,10 +55589,27 @@ var store = new Vuex.Store({
           });
         }
       }
+
+      dispatch('selectionRecursiveCalculate');
     },
-    deselectAll: function deselectAll(_ref7) {
+    selectionRecursiveCalculate: function selectionRecursiveCalculate(_ref7) {
       var state = _ref7.state,
-          commit = _ref7.commit;
+          commit = _ref7.commit,
+          getters = _ref7.getters;
+      commit('SET_WAITING', true);
+      var href = '/getSelectedFilesRecursiveStat';
+      axios.post(href, getters.getSelectedItemsArray).then(function (resp) {
+        commit('SET_WAITING', false);
+        state.selectionRecursiveInfo = resp.data; //console.log("copySelectedFiles : ho conservato i seguenti dati :");
+        //console.log(state.filesToCopyOrCut);
+      })["catch"](function (err) {
+        commit('SET_WAITING', false);
+        console.log('Errore su richiesta POST a ' + href + ': ' + err);
+      });
+    },
+    deselectAll: function deselectAll(_ref8) {
+      var state = _ref8.state,
+          commit = _ref8.commit;
       state.selected = []; //console.log("deselectAll()=>");
 
       commit('SET_START_SELECTION', -1);
@@ -55110,19 +55622,68 @@ var store = new Vuex.Store({
     addFolderModalHide: function addFolderModalHide() {
       $('#mymodal').modal('hide');
     },
-    addFolder: function addFolder(_ref8, folderName) {
-      var getters = _ref8.getters,
-          dispatch = _ref8.dispatch;
+    addFolder: function addFolder(_ref9, folderName) {
+      var getters = _ref9.getters,
+          dispatch = _ref9.dispatch,
+          commit = _ref9.commit;
+      commit('SET_WAITING', true);
       var href = "/folderCreate";
       var form = new FormData();
       form.append('_token', window.csrf_token);
       form.append('id_path', getters.getIdPath);
-      form.append("folderName", folderName);
-      console.log(form);
+      form.append("folderName", folderName); //console.log(form);
+
       axios.post(href, form).then(function (resp) {
-        console.log(resp);
+        commit('SET_WAITING', false); //console.log(resp);
+
         dispatch('getFileInfo');
       })["catch"](function (err) {
+        commit('SET_WAITING', false);
+        console.log('Errore su richiesta POST a ' + href + ': ' + err);
+      });
+    },
+    copySelectedFiles: function copySelectedFiles(_ref10) {
+      var state = _ref10.state,
+          getters = _ref10.getters,
+          commit = _ref10.commit;
+      commit('SET_WAITING', true);
+      var href = '/getSelectedFilesRecursiveStat';
+      axios.post(href, getters.getSelectedItemsArray).then(function (resp) {
+        commit('SET_WAITING', false);
+        state.filesToCopyOrCut = resp.data;
+        state.filesToCopyOrCut["function"] = "copy"; //console.log("copySelectedFiles : ho conservato i seguenti dati :");
+        //console.log(state.filesToCopyOrCut);
+      })["catch"](function (err) {
+        commit('SET_WAITING', false);
+        console.log('Errore su richiesta POST a ' + href + ': ' + err);
+      });
+    },
+    cutSelectedFiles: function cutSelectedFiles(_ref11) {
+      var state = _ref11.state,
+          getters = _ref11.getters,
+          commit = _ref11.commit;
+      //informazioni statistiche dei file selezionati tenendo conto dei contenuti delle directory              
+      commit('SET_WAITING', true);
+      var href = '/getSelectedFilesRecursiveStat';
+      axios.post(href, getters.getSelectedItemsArray).then(function (resp) {
+        commit('SET_WAITING', false);
+        state.filesToCopyOrCut = resp.data;
+        state.filesToCopyOrCut["function"] = "cut"; //console.log("cutSelectedFiles : ho conservato i seguenti dati :");
+        //console.log(state.filesToCopyOrCut);
+      })["catch"](function (err) {
+        commit('SET_WAITING', false);
+        console.log('Errore su richiesta POST a ' + href + ': ' + err);
+      });
+    },
+    pasteFiles: function pasteFiles(_ref12) {
+      var getters = _ref12.getters,
+          commit = _ref12.commit;
+      commit('SET_WAITING', true);
+      var href = '/pasteFiles';
+      axios.post(href, getters.getFilesToCopyOrCut).then(function (resp) {
+        commit('SET_WAITING', false); //console.log(resp);
+      })["catch"](function (err) {
+        commit('SET_WAITING', false);
         console.log('Errore su richiesta POST a ' + href + ': ' + err);
       });
     }
@@ -55130,6 +55691,9 @@ var store = new Vuex.Store({
 
   },
   getters: {
+    getWaiting: function getWaiting(state) {
+      return state.waiting;
+    },
     getFiles: function getFiles(state) {
       return state.files;
     },
@@ -55144,18 +55708,15 @@ var store = new Vuex.Store({
     },
     getSelectedItem: function getSelectedItem(state) {
       return function (id) {
-        //console.log("getSelectedItem => cerco l'id "+id);
+        //item[id] singolo 
         var v = state.selected.find(function (item) {
           return item.id == id;
         });
 
         if (v == null || v == -1) {
           //se l'elemento non esiste nell'array
-          //console.log("non trovato... ritorno false");
           return false;
-        } //console.log("Trovato :");
-        //console.log(v);
-
+        }
 
         return state.selected[v.idref].val;
       };
@@ -55167,7 +55728,12 @@ var store = new Vuex.Store({
       return state.endSelection;
     },
     getSelectedCount: function getSelectedCount(state) {
+      //item selezionati senza tener conto delle sottodirectory
       return state.selected.length;
+    },
+    getRecursiveSelectedCount: function getRecursiveSelectedCount(state) {
+      //item selezionati senza tener conto delle sottodirectory                         
+      return state.selectionRecursiveInfo;
     },
     getSelectedItemsArray: function getSelectedItemsArray(state) {
       //ritorna la selezione fatta SENZA TENER CONTO DEI CONTENUTI DELLE DIR
@@ -55180,38 +55746,18 @@ var store = new Vuex.Store({
 
       return state.selectedItemsArray;
     },
-    copySelectedFiles: function copySelectedFiles(state, getters) {
-      //informazioni statistiche dei file selezionati tenendo conto dei contenuti delle directory            
-      var href = '/getSelectedFilesRecursiveStat';
-      axios.post(href, getters.getSelectedItemsArray).then(function (resp) {
-        state.filesToCopyOrCut = resp.data;
-        state.filesToCopyOrCut["function"] = "copy"; //console.log("copySelectedFiles : ho conservato i seguenti dati :");
-        //console.log(state.filesToCopyOrCut);
-      })["catch"](function (err) {
-        console.log('Errore su richiesta POST a ' + href + ': ' + err);
-      });
-    },
-    cutSelectedFiles: function cutSelectedFiles(state, getters) {
-      //informazioni statistiche dei file selezionati tenendo conto dei contenuti delle directory            
-      var href = '/getSelectedFilesRecursiveStat';
-      axios.post(href, getters.getSelectedItemsArray).then(function (resp) {
-        state.filesToCopyOrCut = resp.data;
-        state.filesToCopyOrCut["function"] = "cut"; //console.log("cutSelectedFiles : ho conservato i seguenti dati :");
-        //console.log(state.filesToCopyOrCut);
-      })["catch"](function (err) {
-        console.log('Errore su richiesta POST a ' + href + ': ' + err);
-      });
-    },
     getFilesToCopyOrCut: function getFilesToCopyOrCut(state) {
+      if (Object.entries(state.filesToCopyOrCut).length === 0) return {
+        total: 0,
+        totalFiles: 0,
+        totalDirs: 0,
+        totalSize: 0,
+        idSelected: [],
+        //id dei file da copiare o tagliare
+        "function": "" //copy or cut
+
+      };
       return state.filesToCopyOrCut;
-    },
-    pasteFiles: function pasteFiles(state, getters) {
-      var href = '/pasteFiles';
-      axios.post(href, getters.getFilesToCopyOrCut).then(function (resp) {
-        console.log(resp);
-      })["catch"](function (err) {
-        console.log('Errore su richiesta POST a ' + href + ': ' + err);
-      });
     },
     getAddFolderModalShow: function getAddFolderModalShow(state) {
       return state.addFolderModalShow;
@@ -55274,6 +55820,8 @@ Vue.component('mycloud-tab-header-component', __webpack_require__(/*! ./componen
 Vue.component('mycloud-tabella-files-component', __webpack_require__(/*! ./components/mycloud/mycloudTabellaFilesComponent.vue */ "./resources/js/components/mycloud/mycloudTabellaFilesComponent.vue")["default"]);
 Vue.component('mycloud-tabella-row-files-component', __webpack_require__(/*! ./components/mycloud/mycloudTabellaRowFilesComponent.vue */ "./resources/js/components/mycloud/mycloudTabellaRowFilesComponent.vue")["default"]);
 Vue.component('mycloud-copier-component', __webpack_require__(/*! ./components/mycloud/mycloudCopierComponent.vue */ "./resources/js/components/mycloud/mycloudCopierComponent.vue")["default"]);
+Vue.component('mycloud-wait-component', __webpack_require__(/*! ./components/mycloud/mycloudWaitComponent.vue */ "./resources/js/components/mycloud/mycloudWaitComponent.vue")["default"]);
+Vue.component('tec-info-component', __webpack_require__(/*! ./components/mycloud/tecInfoComponent.vue */ "./resources/js/components/mycloud/tecInfoComponent.vue")["default"]);
 Vue.component('add-folder-modal-component', __webpack_require__(/*! ./components/mycloud/modals/addFolderModalComponent.vue */ "./resources/js/components/mycloud/modals/addFolderModalComponent.vue")["default"]);
 Vue.component('context-menu-component', __webpack_require__(/*! ./components/mycloud/modals/contexMenuComponent.vue */ "./resources/js/components/mycloud/modals/contexMenuComponent.vue")["default"]);
 Vue.component('my-little-popup-component', __webpack_require__(/*! ./components/mycloud/modals/myLittlePopupComponent.vue */ "./resources/js/components/mycloud/modals/myLittlePopupComponent.vue")["default"]);

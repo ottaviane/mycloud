@@ -39,6 +39,7 @@ import { store } from './vuex/storeVuex';//carica lo script Vuex
 import { mapGetters } from 'vuex';
 
     export default {
+        name : "mycloudTabellaFilesComponent",
         store,
         data() {
             return {
@@ -87,29 +88,34 @@ import { mapGetters } from 'vuex';
                     
                 }
             },
-            rowMouseDxClicked(event) //tastp destro del mouse
+            rowMouseDxClicked(event) //tasto destro del mouse sulla base e non sulla lista files
             {
                 if(event  && this.type!="UP"){
                     event.preventDefault();
+                    //console.log(this.$options.name+": event hooked on dx mouse click.");
                     EventBus.$emit("contextMenuClicked",{
                         x : event.x,
                         y : event.y,
-                        id: 0,
+                        id: -1,
                     });
                 }
             },
         },
         mounted() { 
             this.getList();     
-            this.log("ho ottenuto da Vuex i seguenti dati:");
-                this.log(this.getFiles);
-                this.log(this.getDirs);     
+            // this.log("ho ottenuto da Vuex i seguenti dati:");
+            //     this.log(this.getFiles);
+            //     this.log(this.getDirs);     
         },
         created(){
             EventBus.$on("contextMenuClicked", data => {
-                        store.dispatch('deselectAll');
-                        store.dispatch('setSelected',{id: data.id, val : true}); 
-                    });
+                if(this.getSelectedItem(data.id  )){ //se l'item su cui è stato fatto click col dx è già selezionato
+                }
+                else{//se l'item su cui è stato fatto click col dx NON è già selezionato allora deseleziona tutto e ricomincia
+                    store.dispatch('deselectAll');
+                    store.dispatch('setSelected',{id: data.id, val : true}); 
+                }
+            });
         }
         
     }

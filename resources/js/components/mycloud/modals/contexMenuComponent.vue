@@ -1,6 +1,6 @@
 <template>
 <div id='contextMenu'
-    ref="myinput"
+    ref="contextMenu"
     tabindex="0"
     :class="{cmvisibile : visibile}"
     :style="{ left: x , top : y, width: (w+'rem'), height: (h+'rem')}"
@@ -8,14 +8,14 @@
 
 >
 
-    <div class="menuitem" @click="copia"><i class="far fa-copy"></i></i>Copia</div>
-    <div class="menuitem" @click="taglia"><i class="fas fa-cut"></i>Taglia</div>
-    <div class="menuitem" @click="incolla" :class="{disabled : (getSelectedCount!=1)}"><i class="fas fa-clone"></i>Incolla</div>
+    <div class="menuitem" @click="copia" :class="{disabled : (getSelectedCount<=0)}" ><i class="far fa-copy"></i></i>Copia</div>
+    <div class="menuitem" @click="taglia" :class="{disabled : (getSelectedCount<=0)}"><i class="fas fa-cut"></i>Taglia</div>
+    <div class="menuitem" @click="incolla" :class="{disabled : (getFilesToCopyOrCut.total<=0)}"><i class="fas fa-clone"></i>Incolla</div>
     <div class="menuline"></div>
-    <div class="menuitem" @click="rinomina"><i class="fas fa-edit"></i>Rinomina</div>
-    <div class="menuitem" @click="elimina"><i class="fas fa-backspace"></i>Elimina</div>
+    <div class="menuitem" @click="rinomina" :class="{disabled : (getSelectedCount<=0)}"><i class="fas fa-edit"></i>Rinomina</div>
+    <div class="menuitem" @click="elimina" :class="{disabled : (getSelectedCount<=0)}"><i class="fas fa-backspace"></i>Elimina</div>
     <div class="menuline"></div>
-    <div class="menuitem" @click="condividi"><i class="fas fa-share-alt"></i>Condividi</div>
+    <div class="menuitem" @click="condividi" :class="{disabled : (getSelectedCount<=0)}"><i class="fas fa-share-alt"></i>Condividi</div>
 </div>
 </template>
 
@@ -24,9 +24,10 @@ import { EventBus } from "../../../mycloudApp.js";
 import { store } from '../vuex/storeVuex';//carica lo script Vuex
 import { mapGetters } from 'vuex';
     export default {
+        name : "contexMenuComponent",
         store,
         computed:{ 
-            ...mapGetters(['copySelectedFiles','cutSelectedFiles','pasteFiles','getSelectedCount','getScreenAttr'])
+            ...mapGetters(['getSelectedCount','getScreenAttr','getFilesToCopyOrCut'])
         },
         data() {
             return {
@@ -44,13 +45,18 @@ import { mapGetters } from 'vuex';
         },
         methods:    {
             copia(){
-                this.copySelectedFiles;
+                console.log("dispatching...");
+                store.dispatch('copySelectedFiles');
+                console.log("...dispatched");
+                this.visibile=false;
             },
             taglia(){
-                this.cutSelectedFiles;
+                store.dispatch('cutSelectedFiles');
+                this.visibile=false;
             },
             incolla(){
-                this.pasteFiles;
+                store.dispatch('pasteFiles');
+                this.visibile=false;
             },
             rinomina(){
             },
@@ -59,6 +65,7 @@ import { mapGetters } from 'vuex';
             condividi(){
             },
             myblur(){
+                console.log(this.$options.name+": event blur hooked");
                 this.visibile=false;
             },
         },
@@ -77,15 +84,14 @@ import { mapGetters } from 'vuex';
                 console.log(y + " + " + hpx + " = " + (y+hpx));
                 console.log("screen_h = "+screen_h);
                 if((x+wpx)>(screen_w)) x-=wpx;
-                if((y+hpx)>(screen_h)){                    
-                    console.log("base maggiore di hscreen"+(y+hpx)+" > "+(screen_h));
-                    y-=hpx;
-                }
+                if((y+hpx)>(screen_h)) y=screen_h - hpx;             
                 
                 that.x=x+"px";
-                that.y=y+"px";
-               
-
+                that.y=y+"px";             
+                Vue.nextTick().then(function(){        
+                    console.log(that.$refs);
+                    that.$refs.contextMenu.focus();
+                });
             });
 
         },

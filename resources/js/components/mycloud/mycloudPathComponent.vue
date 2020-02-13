@@ -3,7 +3,7 @@
             <img src="/img/iconmonstr-home-6-24.png" style="height: 18px;width: 18px;cursor:pointer;" @click="itemClicked('0')" @contextmenu="rowMouseDxClicked($event,0)">
             <span v-for="(item,id) in getFullPath" :key="id" @contextmenu="rowMouseDxClicked($event,item.id)">
                 <img class="arrowr" src="/img/iconmonstr-arrow-24-12.png">
-                <p @click="itemClicked(item.id)">{{ item.val1 }}</p>
+                <p @click="itemClicked(item.id)" :class="{selected : getSelectedItem(item.id)}" >{{ item.val1 }}({{getSelectedItem(item.id)}})</p>
             </span>
 
         </div>
@@ -16,11 +16,12 @@ import { mapGetters } from 'vuex';
     export default {        
         store,
         computed:{ 
-            ...mapGetters(['getFullPath','getIdPath'])
+            ...mapGetters(['getFullPath','getIdPath','getSelectedItem'])
         },
         methods:    {
             itemClicked(id_to){
                 store.dispatch('chdir',id_to);
+                store.dispatch('setSelected',id_to);
             },
             rowMouseDxClicked(event,id_to) //tastp destro del mouse
             {
@@ -68,6 +69,10 @@ p:hover{
 .arrowr{
     margin-left: 8px;
     margin-right: 8px;
+}
+.selected{
+    color:red;
+    background: yellow;
 }
 </style>
 

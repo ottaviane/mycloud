@@ -1,7 +1,6 @@
-
 export const store = new Vuex.Store({
     state: {    //insieme di variabili globali
-        loadingStatus: 'loading',
+        waiting: false,
         selected: [],                   //array contenente indici di riferimento dei file e dirs selezionati
         startSelection : -1,            //indice di inizio selezione
         endSelection : -1,              //indice di fine selezione
@@ -17,12 +16,21 @@ export const store = new Vuex.Store({
             idSelected : [],  //id dei file da copiare o tagliare
             function : "",    //copy or cut
         },
+        selectionRecursiveInfo :{
+            total : 0,
+            totalFiles : 0,
+            totalDirs : 0,    
+            totalSize : 0,  
+            idSelected : [], 
+        },
         selectedItemsArray : [],        //contiene la selezione fatta SENZA TENER CONTO DEI CONTENUTI DELLE DIR
         filesToCopyOrCut : {},
-        screenAttr : {},
-       
+        screenAttr : {},       
     },
     mutations: {   //insieme di funzioni sincrone. Esse vengono invocate con un commit
+        SET_WAITING(state, status) {
+            state.waiting = status    //setta una variabile globale (vedi sopra: gruppo 'state:')
+        },
         SET_LOADING_STATUS(state, status) {
             state.loadingStatus = status    //setta una variabile globale (vedi sopra: gruppo 'state:')
         },
@@ -85,8 +93,8 @@ export const store = new Vuex.Store({
             //console.log("start="+start+"  end="+end);
         },
         SET_SCREEN_ATTR(state,screenAttr){
-            console.log("setting to ");
-            console.log(screenAttr);
+            //console.log("setting to ");
+            //console.log(screenAttr);
             state.screenAttr=screenAttr;
         }
        
@@ -94,31 +102,36 @@ export const store = new Vuex.Store({
         
     },
     actions: {  //insieme di funzioni di tipo asincrono. si invocano col metodo dispatch        
-        getFileInfo({commit,dispatch,getters}){    
+        getFileInfo({commit,dispatch,getters}){  
+            commit('SET_WAITING',true);
             var href='/getList';
-            console.log("Vuex: getting info from "+href);
+            //console.log("Vuex: getting info from "+href);
             let form=new FormData();
             form.append('_token',window.csrf_token);
             form.append('id_path',getters.getIdPath);
             axios.post(href,form).then( resp => {
-                console.log("Vuex: ricevo i seguenti dati:");
-                console.log(resp.data);
+                //console.log("Vuex: ricevo i seguenti dati:");
+                //console.log(resp.data);
                 commit('SET_FILES',resp.data.flist);
                 commit('SET_DIRS',resp.data.dlist);
-
-                dispatch('requestFullPath');
+                dispatch('requestFullPath');                 
+                commit('SET_WAITING',false);
             }).catch( err => {
-                console.log('Errore su richiesta GET a '+href+': '+err);
+                console.log('Errore su richiesta GET a '+href+': '+err);                
+                commit('SET_WAITING',false);
             });            
         },
         requestFullPath({getters,commit}){
+            commit('SET_WAITING',true);
             var href="/getPath"; //ricerchiamo il path completo partendo dall'id_path corrente
             let form=new FormData();
             form.append("_token",window.csrf_token);
             form.append("id_path",getters.getIdPath);
-            axios.post(href,form).then( resp => {
+            axios.post(href,form).then( resp => {                
+                commit('SET_WAITING',false);
                 commit('SET_FULL_PATH', resp.data.path);
-            }).catch( err => {
+            }).catch( err => {                
+                commit('SET_WAITING',false);
                 console.log("Errore su richiesta POST a "+href+": "+err);
             });
         },
@@ -128,22 +141,28 @@ export const store = new Vuex.Store({
             dispatch('getFileInfo');
         },
         goUp({dispatch,getters,commit}){
+            commit('SET_WAITING',true);
             var href='/goUp'; //ricerchiamo il padre dell'id corrente
             let form=new FormData();
             form.append('_token',window.csrf_token);
             form.append('id_path',getters.getIdPath);
-            axios.post(href,form).then( resp => {
+            axios.post(href,form).then( resp => {             
+                commit('SET_WAITING',false);
                 commit('SET_ID_PATH',resp.data.id_path);
                 dispatch('getFileInfo',resp.data.id_path);
-            }).catch( err => {
+            }).catch( err => {             
+                commit('SET_WAITING',false);
                 console.log('Errore su richiesta POST a '+href+': '+err);
             });
         },
-        setSelected({commit},valore){
-            commit('SET_SELECTED',valore); 
-            if(valore.val) commit('SET_START_SELECTION',valore.id);
+        setSelected({commit,dispatch},valore){
+            if(valore.id>-1){
+                commit('SET_SELECTED',valore); 
+                if(valore.val) commit('SET_START_SELECTION',valore.id);
+                dispatch('selectionRecursiveCalculate');
+            }
         },
-        rangeSelect({state,commit,getters}, data){
+        rangeSelect({state,commit,getters,dispatch}, data){
             //console.log("deselector="+deselector);
             commit('SET_END_SELECTION', data.id );
             var start=getters.getStartSelection;
@@ -164,7 +183,22 @@ export const store = new Vuex.Store({
                     commit("SET_SELECTED",{id: i+1 , val:true});
                 }
             }
-        
+            dispatch('selectionRecursiveCalculate');
+        },
+        selectionRecursiveCalculate({state,commit,getters}){
+            commit('SET_WAITING',true);           
+            var href='/getSelectedFilesRecursiveStat';
+            axios.post(href,getters.getSelectedItemsArray)
+            .then(resp => {             
+                commit('SET_WAITING',false);
+                state.selectionRecursiveInfo=resp.data;
+                //console.log("copySelectedFiles : ho conservato i seguenti dati :");
+                //console.log(state.filesToCopyOrCut);
+            })
+            .catch(err => {             
+                commit('SET_WAITING',false);
+                console.log('Errore su richiesta POST a '+href+': '+err);
+            });  
         },
         deselectAll({state,commit}){
             state.selected = [];
@@ -179,23 +213,75 @@ export const store = new Vuex.Store({
         addFolderModalHide(){            
             $('#mymodal').modal('hide');
         },
-        addFolder({getters,dispatch},folderName){
+        addFolder({getters,dispatch,commit},folderName){             
+            commit('SET_WAITING',true);
             var href="/folderCreate";
             let form=new FormData();
             form.append('_token',window.csrf_token);
             form.append('id_path',getters.getIdPath);
             form.append("folderName",folderName);
-            console.log(form);
-            axios.post(href,form).then( resp => {
-                console.log(resp);
+            //console.log(form);
+            axios.post(href,form).then( resp => {             
+                commit('SET_WAITING',false);
+                //console.log(resp);
                 dispatch('getFileInfo');
-            }).catch( err => {
+            }).catch( err => {             
+                commit('SET_WAITING',false);
+                console.log('Errore su richiesta POST a '+href+': '+err);
+            });
+        },
+        copySelectedFiles({state, getters,commit}){                          
+            commit('SET_WAITING',true);           
+            var href='/getSelectedFilesRecursiveStat';
+            axios.post(href,getters.getSelectedItemsArray)
+            .then(resp => {             
+                commit('SET_WAITING',false);
+                state.filesToCopyOrCut=resp.data;
+                state.filesToCopyOrCut.function = "copy";
+                //console.log("copySelectedFiles : ho conservato i seguenti dati :");
+                //console.log(state.filesToCopyOrCut);
+            })
+            .catch(err => {             
+                commit('SET_WAITING',false);
+                console.log('Errore su richiesta POST a '+href+': '+err);
+            });               
+        },
+        cutSelectedFiles ({state, getters,commit}) {             //informazioni statistiche dei file selezionati tenendo conto dei contenuti delle directory              
+            commit('SET_WAITING',true);           
+            var href='/getSelectedFilesRecursiveStat';
+            axios.post(href,getters.getSelectedItemsArray)
+            .then(resp => {             
+                commit('SET_WAITING',false);
+                state.filesToCopyOrCut=resp.data;
+                state.filesToCopyOrCut.function = "cut";
+                //console.log("cutSelectedFiles : ho conservato i seguenti dati :");
+                //console.log(state.filesToCopyOrCut);
+            })
+            .catch(err => {             
+                commit('SET_WAITING',false);
+                console.log('Errore su richiesta POST a '+href+': '+err);
+            });               
+        },
+        pasteFiles ({getters,commit}) {             
+            commit('SET_WAITING',true);
+            var href='/pasteFiles';
+            axios.post(href,getters.getFilesToCopyOrCut)
+            .then(resp => {             
+                commit('SET_WAITING',false);
+                //console.log(resp);
+            })
+            .catch(err => {             
+                commit('SET_WAITING',false);
                 console.log('Errore su richiesta POST a '+href+': '+err);
             });
         },
         /***********************************************************************************/
     },
-    getters:{          
+    getters:{ 
+               
+        getWaiting : state => {
+            return state.waiting;
+        },         
         getFiles : state => {
             return state.files;
         },
@@ -208,16 +294,11 @@ export const store = new Vuex.Store({
         getFullPath : state => {
             return state.fullPath;
         },
-        getSelectedItem : state => id => {
-            //console.log("getSelectedItem => cerco l'id "+id);
-            var v = state.selected.find( (item) => item.id == id );
-            
+        getSelectedItem : state => id => {  //item[id] singolo 
+            var v = state.selected.find( (item) => item.id == id );            
             if(v == null || v==-1 ){ //se l'elemento non esiste nell'array
-                //console.log("non trovato... ritorno false");
                 return false;
             }
-            //console.log("Trovato :");
-            //console.log(v);
             return state.selected[v.idref].val;
         },
         getStartSelection : state => {
@@ -226,8 +307,11 @@ export const store = new Vuex.Store({
         getEndSelection : state => {
             return state.endSelection;
         },
-        getSelectedCount : state => {
+        getSelectedCount : state => {  //item selezionati senza tener conto delle sottodirectory
             return state.selected.length;
+        },
+        getRecursiveSelectedCount : state => {  //item selezionati senza tener conto delle sottodirectory                         
+            return state.selectionRecursiveInfo;
         },
         getSelectedItemsArray : state => {   //ritorna la selezione fatta SENZA TENER CONTO DEI CONTENUTI DELLE DIR
             state.selectedItemsArray=[];
@@ -238,44 +322,17 @@ export const store = new Vuex.Store({
             }
             return state.selectedItemsArray;
         },
-        copySelectedFiles : (state, getters) => {             //informazioni statistiche dei file selezionati tenendo conto dei contenuti delle directory            
-            var href='/getSelectedFilesRecursiveStat';
-            axios.post(href,getters.getSelectedItemsArray)
-            .then(resp => {
-                state.filesToCopyOrCut=resp.data;
-                state.filesToCopyOrCut.function = "copy";
-                //console.log("copySelectedFiles : ho conservato i seguenti dati :");
-                //console.log(state.filesToCopyOrCut);
-            })
-            .catch(err => {
-                console.log('Errore su richiesta POST a '+href+': '+err);
-            });               
-        },
-        cutSelectedFiles : (state, getters) => {             //informazioni statistiche dei file selezionati tenendo conto dei contenuti delle directory            
-            var href='/getSelectedFilesRecursiveStat';
-            axios.post(href,getters.getSelectedItemsArray)
-            .then(resp => {
-                state.filesToCopyOrCut=resp.data;
-                state.filesToCopyOrCut.function = "cut";
-                //console.log("cutSelectedFiles : ho conservato i seguenti dati :");
-                //console.log(state.filesToCopyOrCut);
-            })
-            .catch(err => {
-                console.log('Errore su richiesta POST a '+href+': '+err);
-            });               
-        },
+        
         getFilesToCopyOrCut : (state) => {
+            if(Object.entries(state.filesToCopyOrCut).length===0) return{
+                total : 0,
+                totalFiles : 0,
+                totalDirs : 0,    
+                totalSize : 0,  
+                idSelected : [],  //id dei file da copiare o tagliare
+                function : "",    //copy or cut
+            };
             return state.filesToCopyOrCut;
-        },
-        pasteFiles : (state, getters) => {
-            var href='/pasteFiles';
-            axios.post(href,getters.getFilesToCopyOrCut)
-            .then(resp => {
-                console.log(resp);
-            })
-            .catch(err => {
-                console.log('Errore su richiesta POST a '+href+': '+err);
-            });
         },
         getAddFolderModalShow : (state) => {
             return state.addFolderModalShow;

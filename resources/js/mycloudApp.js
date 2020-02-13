@@ -30,6 +30,8 @@ Vue.component('mycloud-tab-header-component', require('./components/mycloud/mycl
 Vue.component('mycloud-tabella-files-component', require('./components/mycloud/mycloudTabellaFilesComponent.vue').default);
 Vue.component('mycloud-tabella-row-files-component', require('./components/mycloud/mycloudTabellaRowFilesComponent.vue').default);
 Vue.component('mycloud-copier-component', require('./components/mycloud/mycloudCopierComponent.vue').default);
+Vue.component('mycloud-wait-component', require('./components/mycloud/mycloudWaitComponent.vue').default);
+Vue.component('tec-info-component', require('./components/mycloud/tecInfoComponent.vue').default);
 
 Vue.component('add-folder-modal-component', require('./components/mycloud/modals/addFolderModalComponent.vue').default);
 Vue.component('context-menu-component', require('./components/mycloud/modals/contexMenuComponent.vue').default);
